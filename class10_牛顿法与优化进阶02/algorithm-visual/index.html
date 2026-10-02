@@ -1,0 +1,350 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Algorithm Visual Lab V4</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+    <script defer src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+    <script defer src="app.js"></script>
+</head>
+<body>
+<header class="topbar"><a class="brand" href="#top"><span
+        class="brand-mark">∑</span><span><strong>Algorithm Visual</strong><small>算法可视化</small></span></a>
+    <nav aria-label="算法导航"><a href="#newton">牛顿法</a><a href="#taylor">泰勒展开</a><a
+            href="#maclaurin">麦克劳林</a><a href="#bfgs">拟牛顿法</a><a href="#xgb">XGBoost</a><a
+            href="#lgb">LightGBM</a></nav>
+    <button id="themeToggle" class="theme-toggle" type="button" aria-label="切换主题">◐</button>
+</header>
+<main class="page" id="top">
+    <section class="intro">
+        <div><p class="eyebrow">INTERACTIVE STUDY</p>
+            <h1>把算法过程变成可观察的实验</h1>
+            <p>输入参数、运行实验，观察逼近误差、优化路径和提升树的逐轮训练过程。</p></div>
+        <div class="intro-stat"><strong>06</strong><span>交互实验模块</span></div>
+    </section>
+    <section class="algorithm tone-green" id="newton">
+        <div class="section-heading"><span class="number">01</span>
+            <div><h2>牛顿法 <em>Newton Method</em></h2>
+                <p>通过梯度与曲率信息迭代寻找驻点；可观察收敛、停滞及非凸函数上的行为。</p></div>
+        </div>
+        <div class="workspace">
+            <div class="theory">
+                <div class="subpanel"><h3>更新公式</h3>
+                    <div class="math" id="newtonFormula"></div>
+                    <p class="muted">阻尼 λ 用于调整二阶项，分母接近零时算法会停止以避免数值爆炸。</p></div>
+                <div class="subpanel"><h3>当前目标函数</h3>
+                    <div class="math" id="newtonFunction"></div>
+                    <p class="muted">标记点表示各次迭代位置，表格列出梯度和二阶导数。</p></div>
+                <div class="subpanel note"><h3>观察要点</h3>
+                    <ul>
+                        <li>初始点会影响迭代路径。</li>
+                        <li>二阶导数为负时，Newton 步可能指向局部极大或鞍点。</li>
+                        <li>阻尼不等同于完整的线搜索或信赖域策略。</li>
+                    </ul>
+                </div>
+            </div>
+            <form class="controls" id="newtonForm"><h3>实验参数</h3><label>目标函数<select id="newtonFn">
+                <option value="quad">(x−3)²+1</option>
+                <option value="quartic">x⁴/4−x²/2</option>
+                <option value="cos">1−cos(x)</option>
+            </select></label><label>初始点 x₀<input id="newtonX0" type="number" value="-5" step="0.1"></label><label>最大迭代次数<input
+                    id="newtonSteps" type="number" min="1" max="30" value="10"></label><label>阻尼 λ<input
+                    id="newtonLambda" type="number" min="0" max="100" value="0" step="0.01"></label>
+                <div class="actions">
+                    <button class="primary" type="submit">运行迭代 →</button>
+                    <button class="secondary" type="reset">恢复默认</button>
+                </div>
+                <p class="validation" id="newtonMsg" aria-live="polite"></p></form>
+            <div class="visual">
+                <div class="visual-head">
+                    <div><h3>目标函数与迭代轨迹</h3>
+                        <p>曲线、迭代点及逐步数值表</p></div>
+                    <span class="live-dot">迭代视图</span></div>
+                <div id="newtonChart" class="chart"></div>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                        <tr>
+                            <th>k</th>
+                            <th>xₖ</th>
+                            <th>f(xₖ)</th>
+                            <th>f′(xₖ)</th>
+                            <th>f″(xₖ)</th>
+                        </tr>
+                        </thead>
+                        <tbody id="newtonRows"></tbody>
+                    </table>
+                </div>
+                <div class="metrics" id="newtonMetrics"></div>
+            </div>
+        </div>
+    </section>
+    <section class="algorithm tone-blue" id="taylor">
+        <div class="section-heading"><span class="number">02</span>
+            <div><h2>泰勒展开 <em>Taylor Expansion</em></h2>
+                <p>以任意展开中心构造局部多项式近似，比较原函数与截断多项式。</p></div>
+        </div>
+        <div class="workspace">
+            <div class="theory">
+                <div class="subpanel"><h3>泰勒公式</h3>
+                    <div class="math" id="taylorFormula"></div>
+                    <p class="muted">中心 a 不必为零；当 x 靠近 a 时，低阶多项式通常更能体现局部形状。</p></div>
+                <div class="subpanel"><h3>本次展开</h3>
+                    <div class="math" id="taylorCurrent"></div>
+                    <div class="formula-output" id="taylorExpansionText"></div>
+                </div>
+                <div class="subpanel note"><h3>观察要点</h3>
+                    <ul>
+                        <li>改变中心 a，观察近似精度如何移动。</li>
+                        <li>增加阶数可改善局部拟合，但不保证整个绘图区间都更准确。</li>
+                        <li>最大绝对误差在当前绘图采样点上计算。</li>
+                    </ul>
+                </div>
+            </div>
+            <form class="controls" id="taylorForm"><h3>实验参数</h3><label>函数<select id="taylorFn">
+                <option value="sin">sin(x)</option>
+                <option value="cos">cos(x)</option>
+                <option value="exp">eˣ</option>
+            </select></label><label>展开中心 a<input id="taylorA" type="number" value="1" step="0.1"></label><label>展开阶数<input
+                    id="taylorN" type="number" min="1" max="12" value="5"></label>
+                <div class="two-input"><label>范围左端<input id="taylorMin" type="number" value="-3" step="0.5"></label><label>范围右端<input
+                        id="taylorMax" type="number" value="5" step="0.5"></label></div>
+                <div class="actions">
+                    <button class="primary" type="submit">运行实验 →</button>
+                    <button class="secondary" type="reset">恢复默认</button>
+                </div>
+                <p class="validation" id="taylorMsg" aria-live="polite"></p></form>
+            <div class="visual">
+                <div class="visual-head">
+                    <div><h3>函数逼近结果</h3>
+                        <p>原函数与 Taylor 多项式对照</p></div>
+                    <span class="live-dot">逼近视图</span></div>
+                <div id="taylorChart" class="chart"></div>
+                <div class="metrics" id="taylorMetrics"></div>
+            </div>
+        </div>
+    </section>
+    <section class="algorithm tone-violet" id="maclaurin">
+        <div class="section-heading"><span class="number">03</span>
+            <div><h2>麦克劳林展开 <em>Maclaurin Series</em></h2>
+                <p>麦克劳林展开是展开中心固定为 0 的泰勒展开。</p></div>
+        </div>
+        <div class="workspace">
+            <div class="theory">
+                <div class="subpanel"><h3>麦克劳林公式</h3>
+                    <div class="math" id="macFormula"></div>
+                    <p class="muted">Pₙ(x) = Σ f⁽ᵏ⁾(0)xᵏ/k!，展开中心固定为原点。</p></div>
+                <div class="subpanel"><h3>当前多项式</h3>
+                    <div class="math" id="macCurrent"></div>
+                    <p class="muted">图中同时显示 x=0 的展开中心与近似误差。</p></div>
+                <div class="subpanel note"><h3>观察要点</h3>
+                    <ul>
+                        <li>与一般 Taylor 的区别在于中心固定为 0。</li>
+                        <li>sin、cos 的偶次或奇次项系数会为零。</li>
+                        <li>观察区间远离 0 时，截断误差可能变大。</li>
+                    </ul>
+                </div>
+            </div>
+            <form class="controls" id="macForm"><h3>实验参数</h3><label>函数<select id="macFn">
+                <option value="sin">sin(x)</option>
+                <option value="cos">cos(x)</option>
+                <option value="exp">eˣ</option>
+            </select></label><label>展开阶数<input id="macN" type="number" min="1" max="14" value="7"></label>
+                <div class="two-input"><label>范围左端<input id="macMin" type="number" value="-6"
+                                                             step="0.5"></label><label>范围右端<input id="macMax"
+                                                                                                      type="number"
+                                                                                                      value="6"
+                                                                                                      step="0.5"></label>
+                </div>
+                <div class="actions">
+                    <button class="primary" type="submit">运行展开 →</button>
+                    <button class="secondary" type="reset">恢复默认</button>
+                </div>
+                <p class="validation" id="macMsg" aria-live="polite"></p></form>
+            <div class="visual">
+                <div class="visual-head">
+                    <div><h3>Maclaurin 逼近曲线</h3>
+                        <p>展开中心固定在 x=0</p></div>
+                    <span class="live-dot">原点展开</span></div>
+                <div id="macChart" class="chart"></div>
+                <div class="metrics" id="macMetrics"></div>
+            </div>
+        </div>
+    </section>
+    <section class="algorithm tone-cyan" id="bfgs">
+        <div class="section-heading"><span class="number">04</span>
+            <div><h2>拟牛顿法（BFGS） <em>Quasi-Newton</em></h2>
+                <p>用梯度差分更新 Hessian 逆矩阵近似，在二维目标函数等高线上展示搜索路径。</p></div>
+        </div>
+        <div class="workspace">
+            <div class="theory">
+                <div class="subpanel"><h3>BFGS 更新</h3>
+                    <div class="math" id="bfgsFormula"></div>
+                    <p class="muted">Hₖ 是 Hessian 逆矩阵的近似，通过 sₖ 与 yₖ 的曲率信息更新。</p></div>
+                <div class="subpanel"><h3>实验目标</h3>
+                    <div class="math" id="bfgsObjective">f(x, y) = ½(x² + 8y²)</div>
+                    <p class="muted">该二次函数有不同方向的曲率，便于观察梯度下降路径与 BFGS 更新差异。</p></div>
+                <div class="subpanel note"><h3>观察要点</h3>
+                    <ul>
+                        <li>起点与学习步长影响轨迹。</li>
+                        <li>线搜索使用回溯方式寻找满足下降条件的步长。</li>
+                        <li>表格记录位置、函数值与梯度范数。</li>
+                    </ul>
+                </div>
+            </div>
+            <form class="controls" id="bfgsForm"><h3>实验参数</h3><label>初始 x₀<input id="bfgsX" type="number"
+                                                                                       value="4"
+                                                                                       step="0.1"></label><label>初始 y₀<input
+                    id="bfgsY" type="number" value="3" step="0.1"></label><label>最大迭代次数<input id="bfgsSteps"
+                                                                                                    type="number"
+                                                                                                    min="1" max="50"
+                                                                                                    value="12"></label><label>初始逆
+                Hessian 尺度<input id="bfgsScale" type="number" min="0.01" max="10" value="1" step="0.1"></label>
+                <div class="actions">
+                    <button class="primary" type="submit">运行 BFGS →</button>
+                    <button class="secondary" type="reset">恢复默认</button>
+                </div>
+                <p class="validation" id="bfgsMsg" aria-live="polite"></p></form>
+            <div class="visual">
+                <div class="visual-head">
+                    <div><h3>二维等高线与搜索路径</h3>
+                        <p>折线连接每轮参数位置</p></div>
+                    <span class="live-dot">优化轨迹</span></div>
+                <div id="bfgsChart" class="chart"></div>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                        <tr>
+                            <th>k</th>
+                            <th>xₖ</th>
+                            <th>yₖ</th>
+                            <th>f(xₖ,yₖ)</th>
+                            <th>‖∇f‖</th>
+                        </tr>
+                        </thead>
+                        <tbody id="bfgsRows"></tbody>
+                    </table>
+                </div>
+                <div class="metrics" id="bfgsMetrics"></div>
+            </div>
+        </div>
+    </section>
+    <section class="algorithm tone-rose" id="xgb">
+        <div class="section-heading"><span class="number">05</span>
+            <div><h2>XGBoost <em>Second-order Gradient Boosting</em></h2>
+                <p>使用平方误差目标的二阶统计量，展示树模型逐轮拟合及训练损失变化。</p></div>
+        </div>
+        <div class="workspace">
+            <div class="theory">
+                <div class="subpanel"><h3>叶子权重与分裂增益</h3>
+                    <div class="math" id="xgbFormula"></div>
+                    <p class="muted">教学版以一维回归树进行贪心分裂，使用 G/H 统计量和 L2 正则。</p></div>
+                <div class="subpanel"><h3>训练流程</h3>
+                    <ol>
+                        <li>初始化为目标均值</li>
+                        <li>计算梯度 G 与 Hessian H</li>
+                        <li>枚举切分点并计算增益</li>
+                        <li>递归生成受深度限制的树</li>
+                        <li>按学习率累加树输出</li>
+                    </ol>
+                </div>
+                <div class="subpanel note"><h3>实验说明</h3>
+                    <ul>
+                        <li>数据为确定性合成回归样本。</li>
+                        <li>树数、深度、学习率与 λ 均可输入。</li>
+                        <li>此为教学实现，不覆盖官方库的全部工程优化。</li>
+                    </ul>
+                </div>
+            </div>
+            <form class="controls" id="xgbForm"><h3>实验参数</h3><label>树数量<input id="xgbTrees" type="number" min="1"
+                                                                                     max="15" value="5"></label><label>最大深度<input
+                    id="xgbDepth" type="number" min="1" max="4" value="2"></label><label>学习率<input id="xgbLr"
+                                                                                                      type="number"
+                                                                                                      min="0.01" max="1"
+                                                                                                      value="0.3"
+                                                                                                      step="0.05"></label><label>正则
+                λ<input id="xgbLambda" type="number" min="0" max="20" value="1" step="0.1"></label>
+                <div class="actions">
+                    <button class="primary" type="submit">训练模型 →</button>
+                    <button class="secondary" type="reset">恢复默认</button>
+                </div>
+                <p class="validation" id="xgbMsg" aria-live="polite"></p></form>
+            <div class="visual">
+                <div class="visual-head">
+                    <div><h3>模型拟合与训练误差</h3>
+                        <p>上方为数据与最终预测，下方为每轮 MSE</p></div>
+                    <span class="live-dot">训练视图</span></div>
+                <div id="xgbChart" class="chart"></div>
+                <div id="xgbLossChart" class="chart compact-chart"></div>
+                <div class="metrics" id="xgbMetrics"></div>
+            </div>
+        </div>
+    </section>
+    <section class="algorithm tone-cyan" id="lgb">
+        <div class="section-heading"><span class="number">06</span>
+            <div><h2>LightGBM <em>Leaf-wise Growth</em></h2>
+                <p>根据当前叶子候选分裂增益，优先扩展收益最大的叶节点。</p></div>
+        </div>
+        <div class="workspace">
+            <div class="theory">
+                <div class="subpanel"><h3>分裂增益</h3>
+                    <div class="math" id="lgbFormula"></div>
+                    <p class="muted">实现使用平方误差梯度与 Hessian，计算候选阈值的增益。</p></div>
+                <div class="subpanel"><h3>Leaf-wise 流程</h3>
+                    <ol>
+                        <li>根节点作为初始叶子</li>
+                        <li>计算各叶子的最佳二分候选</li>
+                        <li>选择增益最大的叶子进行分裂</li>
+                        <li>更新候选叶子，直到约束满足</li>
+                    </ol>
+                </div>
+                <div class="subpanel note"><h3>参数解释</h3>
+                    <ul>
+                        <li>叶子数控制树复杂度。</li>
+                        <li>最大深度限制路径长度；-1 表示不额外限制。</li>
+                        <li>最小增益用于过滤收益不足的切分。</li>
+                    </ul>
+                </div>
+            </div>
+            <form class="controls" id="lgbForm"><h3>实验参数</h3><label>叶子数 num_leaves<input id="lgbLeaves"
+                                                                                                type="number" min="2"
+                                                                                                max="16"
+                                                                                                value="8"></label><label>最大深度<input
+                    id="lgbDepth" type="number" min="-1" max="8" value="-1"></label><label>最小分裂增益<input
+                    id="lgbGain" type="number" min="0" max="100" value="0" step="0.1"></label>
+                <div class="actions">
+                    <button class="primary" type="submit">生成生长过程 →</button>
+                    <button class="secondary" type="reset">恢复默认</button>
+                </div>
+                <p class="validation" id="lgbMsg" aria-live="polite"></p></form>
+            <div class="visual">
+                <div class="visual-head">
+                    <div><h3>实际候选增益驱动的树结构</h3>
+                        <p>节点显示特征阈值与增益，按 Leaf-wise 顺序扩展</p></div>
+                    <span class="live-dot">树生长</span></div>
+                <div id="lgbTree" class="tree-view"></div>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                        <tr>
+                            <th>分裂轮次</th>
+                            <th>叶节点</th>
+                            <th>特征阈值</th>
+                            <th>Gain</th>
+                            <th>分裂后叶数</th>
+                        </tr>
+                        </thead>
+                        <tbody id="lgbRows"></tbody>
+                    </table>
+                </div>
+                <div class="metrics" id="lgbMetrics"></div>
+            </div>
+        </div>
+    </section>
+    <footer>算法可视化</footer>
+</main>
+</body>
+</html>
